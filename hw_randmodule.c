@@ -33,7 +33,7 @@ hw_rand_rand(PyObject *self, PyObject *args)
         return NULL;
     }
     else
-        return Py_BuildValue("i", rand);
+        return PyLong_FromUnsignedLongLong(rand);
 }
 
 static PyMethodDef HwRandMethods[] = {
