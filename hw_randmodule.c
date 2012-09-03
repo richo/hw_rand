@@ -57,12 +57,10 @@ hw_rand_tick(PyObject *self, PyObject *args)
     {
         while ((place < sizeof(rand)) && ((1 << place) & rand))
         {
-            if (place > hw_rand_counter)
-            {
-                hw_rand_counter++;
-            }
             place++;
         }
+        if (place > hw_rand_counter)
+            hw_rand_counter = place;
     }
     Py_RETURN_NONE;
 }
