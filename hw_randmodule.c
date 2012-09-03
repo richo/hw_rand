@@ -1,6 +1,7 @@
 #include <Python.h>
 
 static PyObject *HwRand_RandUnavailable;
+unsigned long int hw_rand_counter = 0;
 
 int _rdrand64_step(unsigned long long int *therand)
 {
@@ -36,9 +37,33 @@ hw_rand_rand(PyObject *self, PyObject *args)
         return PyLong_FromUnsignedLongLong(rand);
 }
 
+static PyObject *
+hw_rand_tick(PyObject *self, PyObject *args)
+{
+    unsigned long long int rand;
+    if (_rdrand64_step(&rand) == 0)
+    {
+        // Ignore failure
+    }
+    else
+    {
+        // Count leading zeros, update hw_rand_counter if
+        return PyLong_FromUnsignedLongLong(rand);
+}
+
+static PyObject *
+hw_rand_count(PyObject *self, PyObject *args)
+{
+    return PyLong_FromUnsignedLong(2 ** hw_rand_counter);
+}
+
 static PyMethodDef HwRandMethods[] = {
     {"rand",  hw_rand_rand, METH_VARARGS,
         "Return a 64bit wide random integer"},
+    {"tick",  hw_rand_tick, METH_VARARGS,
+        "Increment our probabilistic counter"},
+    {"count",  hw_rand_count, METH_VARARGS,
+        "Fetch the current value from our probablistic counter"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
