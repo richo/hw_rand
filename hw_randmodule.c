@@ -1,4 +1,7 @@
 #include <Python.h>
+#include <math.h>
+
+#define RAISE_RAND_UNAVAILABLE PyErr_SetString(HwRand_RandUnavailable, "Couldn't obtain random int"); return NULL
 
 static PyObject *HwRand_RandUnavailable;
 unsigned long int hw_rand_counter = 0;
@@ -30,8 +33,7 @@ hw_rand_rand(PyObject *self, PyObject *args)
     unsigned long long int rand;
     if (_rdrand64_step(&rand) == 0)
     {
-        PyErr_SetString(HwRand_RandUnavailable, "Couldn't obtain random int");
-        return NULL;
+        RAISE_RAND_UNAVAILABLE;
     }
     else
         return PyLong_FromUnsignedLongLong(rand);
@@ -41,20 +43,34 @@ static PyObject *
 hw_rand_tick(PyObject *self, PyObject *args)
 {
     unsigned long long int rand;
+    unsigned char place = 0;
+    /* if (hw_rand_counter == 0) */
+    /* { // Specialcase the first call */
+    /*     hw_rand_counter++; */
+    /*     Py_RETURN_NONE; */
+    /* } */
     if (_rdrand64_step(&rand) == 0)
     {
-        // Ignore failure
+        RAISE_RAND_UNAVAILABLE;
     }
     else
     {
-        // Count leading zeros, update hw_rand_counter if
-        return PyLong_FromUnsignedLongLong(rand);
+        while ((place < sizeof(rand)) && ((1 << place) & rand))
+        {
+            if (place > hw_rand_counter)
+            {
+                hw_rand_counter++;
+            }
+            place++;
+        }
+    }
+    Py_RETURN_NONE;
 }
 
 static PyObject *
 hw_rand_count(PyObject *self, PyObject *args)
 {
-    return PyLong_FromUnsignedLong(2 ** hw_rand_counter);
+    return PyLong_FromUnsignedLong(pow(2, hw_rand_counter) -1);
 }
 
 static PyMethodDef HwRandMethods[] = {
